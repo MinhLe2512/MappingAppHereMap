@@ -15,9 +15,13 @@ import com.example.heremappingapp.activity.*
 import com.example.heremappingapp.activity.`interface`.PlatformPositioningListener
 import com.example.heremappingapp.activity.`interface`.ResultListener
 import com.here.sdk.core.GeoCoordinates
+import com.here.sdk.mapview.LocationIndicator
 import com.here.sdk.mapview.MapScene
 import com.here.sdk.mapview.MapScheme
 import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.random.Random
 
 
 class MainActivity : AppCompatActivity(), LocationListener{
@@ -72,11 +76,23 @@ class MainActivity : AppCompatActivity(), LocationListener{
         }
     }
 
+    private fun addLocationIndicator(geoCoordinates: GeoCoordinates, locationIndicatorStyle: LocationIndicator.IndicatorStyle) {
+        val locationIndicator = LocationIndicator()
+        locationIndicator.locationIndicatorStyle = locationIndicatorStyle
+        val location = com.here.sdk.core.Location.Builder().setCoordinates(geoCoordinates).setTimestamp(Date())
+                .setBearingInDegrees(Random.nextDouble(360.0)).build()
+
+        locationIndicator.updateLocation(location)
+        map_view.addLifecycleListener(locationIndicator)
+    }
+
     private fun loadMapScreen(location: Location) {
         map_view.mapScene.loadScene(MapScheme.NORMAL_DAY, MapScene.LoadSceneCallback() {
             if (it == null) {
                 val distanceInMeters = 1000.0 * 10.0
                 map_view.camera.lookAt(GeoCoordinates(location.latitude, location.longitude, location.altitude), distanceInMeters)
+                addLocationIndicator(GeoCoordinates(location.latitude, location.longitude, location.altitude)
+                        , LocationIndicator.IndicatorStyle.NAVIGATION)
             } else {
                 Toast.makeText(this, "Loading map failed", Toast.LENGTH_SHORT).show()
                 finish()
