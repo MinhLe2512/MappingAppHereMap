@@ -8,16 +8,16 @@ import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.heremappingapp.R
 import com.example.heremappingapp.activity.*
 import com.example.heremappingapp.activity.`interface`.PlatformPositioningListener
 import com.example.heremappingapp.activity.`interface`.ResultListener
-import com.here.sdk.core.GeoCoordinates
-import com.here.sdk.mapview.LocationIndicator
-import com.here.sdk.mapview.MapScene
-import com.here.sdk.mapview.MapScheme
+import com.here.sdk.core.*
+import com.here.sdk.mapview.*
+import com.here.sdk.search.*
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 import kotlin.collections.ArrayList
@@ -27,6 +27,7 @@ import kotlin.random.Random
 class MainActivity : AppCompatActivity(), LocationListener{
     private lateinit var permissionManager: PermissionsManager
     private lateinit var locationPlatformListener: PlatformPositioningListener
+    private lateinit var searchEngine: SearchEngine
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +35,14 @@ class MainActivity : AppCompatActivity(), LocationListener{
 
         map_view.onCreate(savedInstanceState)
         permissionHandler()
+
+
+        btn_search.setOnClickListener{
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                setUpSearchEngine()
+            }
+        }
+
     }
 
     override fun onPause() {
@@ -55,7 +64,6 @@ class MainActivity : AppCompatActivity(), LocationListener{
         locationPlatformListener.onLocationUpdated(location)
     }
 
-
     private fun getUserLocation(locationCallBack: PlatformPositioningListener) {
         val locationManager = this.getSystemService(LOCATION_SERVICE) as LocationManager
         this.locationPlatformListener = locationCallBack
@@ -76,6 +84,58 @@ class MainActivity : AppCompatActivity(), LocationListener{
         }
     }
 
+    private fun addMapMarkers(geoCoordinates: GeoCoordinates) {
+        val mapImage = MapImageFactory.fromResource(this.resources, R.drawable.ic_push_pin)
+        val mapMarker = MapMarker(geoCoordinates, mapImage)
+
+        map_view.mapScene.addMapMarker(mapMarker)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun setUpSearchEngine() {
+        searchEngine = SearchEngine()
+        val maxItems = 30
+        val searchOptions = SearchOptions(LanguageCode.EN_US, maxItems)
+
+        val geoBox = getMapViewGeoBox()
+        val query = TextQuery("Lac", geoBox)
+        var querySearchCallback = SearchCallback { searchError, mutableList ->
+            val args = Bundle()
+            if (searchError != null) {
+                args.putString("searchError", "Search error:$searchError")
+                showAssist(args)
+                return@SearchCallback
+            }
+            args.putString("searchResult", "Search result:" + mutableList?.size)
+            showAssist(args)
+
+            if (mutableList != null) {
+                for (place: Place in mutableList) {
+                    var metadata = Metadata()
+                    metadata.setCustomValue("key_search_result", SearchResultMetadata(place))
+                    addMapMarkers(place.geoCoordinates!!)
+                }
+            }
+        }
+        searchEngine.search(query, searchOptions, querySearchCallback)
+
+
+    }
+
+
+    private fun getMapViewGeoBox(): GeoBox {
+        val bottomLeft2D = Point2D(0.0, map_view.height.toDouble())
+        val topRight2D = Point2D(map_view.width.toDouble(), 0.0)
+
+        val southWestCorner = map_view.viewToGeoCoordinates(bottomLeft2D)
+        val northEastCorner = map_view.viewToGeoCoordinates(topRight2D)
+
+        if (southWestCorner == null || northEastCorner == null) {
+            throw RuntimeException("GeoBox creation failed, corners are null.");
+        }
+        return GeoBox(southWestCorner, northEastCorner)
+    }
+
     private fun addLocationIndicator(geoCoordinates: GeoCoordinates, locationIndicatorStyle: LocationIndicator.IndicatorStyle) {
         val locationIndicator = LocationIndicator()
         locationIndicator.locationIndicatorStyle = locationIndicatorStyle
@@ -91,8 +151,7 @@ class MainActivity : AppCompatActivity(), LocationListener{
             if (it == null) {
                 val distanceInMeters = 1000.0 * 10.0
                 map_view.camera.lookAt(GeoCoordinates(location.latitude, location.longitude, location.altitude), distanceInMeters)
-                addLocationIndicator(GeoCoordinates(location.latitude, location.longitude, location.altitude)
-                        , LocationIndicator.IndicatorStyle.NAVIGATION)
+                addLocationIndicator(GeoCoordinates(location.latitude, location.longitude, location.altitude), LocationIndicator.IndicatorStyle.NAVIGATION)
             } else {
                 Toast.makeText(this, "Loading map failed", Toast.LENGTH_SHORT).show()
                 finish()
@@ -104,11 +163,11 @@ class MainActivity : AppCompatActivity(), LocationListener{
         permissionManager = PermissionsManager()
         permissionManager.request(object : ResultListener {
             override fun onPermisisonsGranted() {
-               getUserLocation(object : PlatformPositioningListener{
-                   override fun onLocationUpdated(location: Location) {
-                       loadMapScreen(location)
-                   }
-               })
+                getUserLocation(object : PlatformPositioningListener {
+                    override fun onLocationUpdated(location: Location) {
+                        loadMapScreen(location)
+                    }
+                })
             }
 
             override fun onPermissionsDenied() {
@@ -164,6 +223,12 @@ class MainActivity : AppCompatActivity(), LocationListener{
                 }
             }
             return listPermissions
+        }
+    }
+
+    private inner class SearchResultMetadata(private var searchResult: Place): CustomMetadataValue{
+        override fun getTag(): String {
+            return "SearchResult Metadata"
         }
     }
 }
