@@ -2,6 +2,8 @@ package com.example.heremappingapp.activity
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -9,8 +11,10 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.graphics.scaleMatrix
 import com.example.heremappingapp.R
 import com.example.heremappingapp.activity.*
 import com.example.heremappingapp.activity.`interface`.PlatformPositioningListener
@@ -24,10 +28,11 @@ import kotlin.collections.ArrayList
 import kotlin.random.Random
 
 
-class MainActivity : AppCompatActivity(), LocationListener{
+class MainActivity : AppCompatActivity(), LocationListener {
     private lateinit var permissionManager: PermissionsManager
     private lateinit var locationPlatformListener: PlatformPositioningListener
     private lateinit var searchEngine: SearchEngine
+    private var listMapMarker = ArrayList<MapMarker>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,13 +41,16 @@ class MainActivity : AppCompatActivity(), LocationListener{
         map_view.onCreate(savedInstanceState)
         permissionHandler()
 
+        map_view.setOnReadyListener {
+            searchEngine = SearchEngine()
+        }
 
-        btn_search.setOnClickListener{
+        btn_search.setOnClickListener {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
                 setUpSearchEngine()
             }
         }
-
+        gestureTapHandler()
     }
 
     override fun onPause() {
@@ -75,7 +83,7 @@ class MainActivity : AppCompatActivity(), LocationListener{
         }
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) &&
                 this.packageManager.hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS))
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100, 100f, this)
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 100, 100f, this)
         else if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 100, 100f, this)
         else {
@@ -84,41 +92,66 @@ class MainActivity : AppCompatActivity(), LocationListener{
         }
     }
 
-    private fun addMapMarkers(geoCoordinates: GeoCoordinates) {
-        val mapImage = MapImageFactory.fromResource(this.resources, R.drawable.ic_push_pin)
-        val mapMarker = MapMarker(geoCoordinates, mapImage)
+    private fun pickMapMarker(touchPoint: Point2D) {
+        map_view.pickMapItems(touchPoint, 2.0, MapViewBase.PickMapItemsCallback {
+            val mapMarkerList = it?.markers
+
+            if (mapMarkerList!!.size == 0)
+                return@PickMapItemsCallback
+            val topMostMarker = mapMarkerList[0]
+            val metadata = topMostMarker.metadata
+
+            if (metadata != null) {
+                var customMetaDataVal = metadata.getCustomValue("key_search_result")
+                if (customMetaDataVal != null) {
+                    val searchResult = customMetaDataVal as SearchResultMetadata
+                    showPopUpDialog("Picked: ", searchResult.searchResult.title + " Vicinity: " + searchResult.searchResult.address.addressText)
+                    return@PickMapItemsCallback
+                }
+            }
+            showPopUpDialog("Picked", "Geocode: " + topMostMarker.coordinates.latitude + ", " + topMostMarker.coordinates.longitude)
+        })
+    }
+
+    private fun addMapMarkers(geoCoordinates: GeoCoordinates, metadata: Metadata?) {
+        val image = BitmapFactory.decodeResource(resources, R.drawable.pin)
+        val scaledBitmap = Bitmap.createScaledBitmap(image, 100, 110, true)
+
+        val mapImage = MapImageFactory.fromBitmap(scaledBitmap)
+        val mapMarker = MapMarker(geoCoordinates, mapImage, Anchor2D(0.5, 1.0))
+        mapMarker.metadata = metadata
+
 
         map_view.mapScene.addMapMarker(mapMarker)
+        listMapMarker.add(mapMarker)
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun setUpSearchEngine() {
-        searchEngine = SearchEngine()
+        clearMap()
         val maxItems = 30
         val searchOptions = SearchOptions(LanguageCode.EN_US, maxItems)
 
         val geoBox = getMapViewGeoBox()
-        val query = TextQuery("Lac", geoBox)
-        var querySearchCallback = SearchCallback { searchError, mutableList ->
-            val args = Bundle()
-            if (searchError != null) {
-                args.putString("searchError", "Search error:$searchError")
-                showAssist(args)
-                return@SearchCallback
-            }
-            args.putString("searchResult", "Search result:" + mutableList?.size)
-            showAssist(args)
+        val query = TextQuery("Pizza", geoBox)
 
-            if (mutableList != null) {
-                for (place: Place in mutableList) {
-                    var metadata = Metadata()
-                    metadata.setCustomValue("key_search_result", SearchResultMetadata(place))
-                    addMapMarkers(place.geoCoordinates!!)
-                }
+        searchEngine.search(query, searchOptions, querySearchCallback)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private val querySearchCallback = SearchCallback { searchError, mutableList ->
+        if (searchError != null) {
+            showPopUpDialog("Search", "Error$searchError")
+            return@SearchCallback
+        }
+        showPopUpDialog("Search", "Results" + mutableList?.size)
+        if (mutableList != null) {
+            for (place: Place in mutableList) {
+                var metadata = Metadata()
+                metadata.setCustomValue("key_search_result", SearchResultMetadata(place))
+                addMapMarkers(place.geoCoordinates!!, metadata)
             }
         }
-        searchEngine.search(query, searchOptions, querySearchCallback)
-
 
     }
 
@@ -146,17 +179,39 @@ class MainActivity : AppCompatActivity(), LocationListener{
         map_view.addLifecycleListener(locationIndicator)
     }
 
+
     private fun loadMapScreen(location: Location) {
-        map_view.mapScene.loadScene(MapScheme.NORMAL_DAY, MapScene.LoadSceneCallback() {
+        map_view.mapScene.loadScene(MapScheme.NORMAL_DAY) {
             if (it == null) {
                 val distanceInMeters = 1000.0 * 10.0
+                map_view.camera.zoomTo(20.0)
                 map_view.camera.lookAt(GeoCoordinates(location.latitude, location.longitude, location.altitude), distanceInMeters)
                 addLocationIndicator(GeoCoordinates(location.latitude, location.longitude, location.altitude), LocationIndicator.IndicatorStyle.NAVIGATION)
             } else {
                 Toast.makeText(this, "Loading map failed", Toast.LENGTH_SHORT).show()
                 finish()
             }
-        })
+        }
+    }
+
+    private fun gestureTapHandler() {
+        map_view.gestures.setTapListener {
+            pickMapMarker(it)
+        }
+    }
+
+    private fun clearMap() {
+        for (mapMarker in listMapMarker) {
+            map_view.mapScene.removeMapMarker(mapMarker)
+        }
+        listMapMarker.clear()
+    }
+
+    private fun showPopUpDialog(title: String, message: String) {
+        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(this)
+        builder.setTitle(title)
+        builder.setMessage(message)
+        builder.show()
     }
 
     private fun permissionHandler() {
@@ -179,6 +234,7 @@ class MainActivity : AppCompatActivity(), LocationListener{
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         permissionManager.onRequestPermissionsResult(requestCode, grantResults)
     }
+
     private inner class PermissionsManager {
         private val PERMISSIONS_REQUEST_CODE = 42
         private lateinit var resultListener: ResultListener
@@ -208,7 +264,7 @@ class MainActivity : AppCompatActivity(), LocationListener{
 
 
         private fun getPermissionsToRequest(): ArrayList<String> {
-            val listPermissions =  ArrayList<String>()
+            val listPermissions = ArrayList<String>()
 
             val packageInfo = this@MainActivity.packageManager.getPackageInfo(this@MainActivity.packageName, PackageManager.GET_PERMISSIONS)
 
@@ -218,7 +274,7 @@ class MainActivity : AppCompatActivity(), LocationListener{
                         continue
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && permission == Manifest.permission.ACTIVITY_RECOGNITION
                             && permission == Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                                continue
+                        continue
                     listPermissions.add(permission)
                 }
             }
@@ -226,7 +282,7 @@ class MainActivity : AppCompatActivity(), LocationListener{
         }
     }
 
-    private inner class SearchResultMetadata(private var searchResult: Place): CustomMetadataValue{
+    private inner class SearchResultMetadata(var searchResult: Place) : CustomMetadataValue {
         override fun getTag(): String {
             return "SearchResult Metadata"
         }
