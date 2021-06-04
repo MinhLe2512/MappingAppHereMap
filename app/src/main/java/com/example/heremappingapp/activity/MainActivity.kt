@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -21,6 +22,7 @@ import com.example.heremappingapp.activity.`interface`.PlatformPositioningListen
 import com.example.heremappingapp.activity.`interface`.ResultListener
 import com.here.sdk.core.*
 import com.here.sdk.mapview.*
+import com.here.sdk.routing.*
 import com.here.sdk.search.*
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
@@ -33,7 +35,9 @@ class MainActivity : AppCompatActivity(), LocationListener {
     private lateinit var locationPlatformListener: PlatformPositioningListener
     private lateinit var searchEngine: SearchEngine
     private var listMapMarker = ArrayList<MapMarker>()
-
+    private var listPolyline = ArrayList<MapPolyline>()
+    private lateinit var userLocation: Location
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -92,6 +96,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun pickMapMarker(touchPoint: Point2D) {
         map_view.pickMapItems(touchPoint, 2.0, MapViewBase.PickMapItemsCallback {
             val mapMarkerList = it?.markers
@@ -105,6 +110,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
                 var customMetaDataVal = metadata.getCustomValue("key_search_result")
                 if (customMetaDataVal != null) {
                     val searchResult = customMetaDataVal as SearchResultMetadata
+                    startRouting(GeoCoordinates(userLocation.latitude, userLocation.longitude, userLocation.altitude), topMostMarker.coordinates)
                     showPopUpDialog("Picked: ", searchResult.searchResult.title + " Vicinity: " + searchResult.searchResult.address.addressText)
                     return@PickMapItemsCallback
                 }
@@ -121,13 +127,50 @@ class MainActivity : AppCompatActivity(), LocationListener {
         val mapMarker = MapMarker(geoCoordinates, mapImage, Anchor2D(0.5, 1.0))
         mapMarker.metadata = metadata
 
-
         map_view.mapScene.addMapMarker(mapMarker)
         listMapMarker.add(mapMarker)
     }
 
-    
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun startRouting(startGeoCoordinates: GeoCoordinates, destinationGeoCoordinates: GeoCoordinates) {
+        val routingEngine = RoutingEngine()
+        val startWayPoint = Waypoint(startGeoCoordinates)
+        val destWayPoint = Waypoint(destinationGeoCoordinates)
+        val listWayPoint = listOf(startWayPoint, destWayPoint)
 
+        routingEngine.calculateRoute(listWayPoint, CarOptions(),
+        CalculateRouteCallback { routingError, mutableList ->
+            if (routingError == null) {
+                val route = mutableList?.get(0)
+                if (route != null) {
+                    showRouteOnMap(route)
+                    val listSections = route.sections
+                    for (section in listSections)
+                        logManeuverInstructions(section)
+                }
+            }
+            else
+                showPopUpDialog("Error while calculating route", routingError.toString())
+        })
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun showRouteOnMap(route: Route) {
+        val routeGeoPolyline = GeoPolyline(route.polyline)
+        val routeMapPolyline = MapPolyline(routeGeoPolyline, 20.0, com.here.sdk.core.Color.valueOf(0.0f, 0.56f, 0.54f, 0.63f))
+        map_view.mapScene.addMapPolyline(routeMapPolyline)
+        listPolyline.add(routeMapPolyline)
+    }
+
+    private fun logManeuverInstructions(section: Section) {
+        val listManeuverInstructions = section.maneuvers
+        for (maneuverInstruction in listManeuverInstructions) {
+            val maneuverAction = maneuverInstruction.action
+            val maneuverLocation = maneuverInstruction.coordinates
+            val maneuverInfo = maneuverInstruction.text + ", Action: " + maneuverAction.name + ", Location: " + maneuverLocation.toString()
+            showPopUpDialog("Show maneuver", maneuverInfo)
+        }
+    }
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun setUpSearchEngine() {
@@ -197,6 +240,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun gestureTapHandler() {
         map_view.gestures.setTapListener {
             pickMapMarker(it)
@@ -224,6 +268,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
                 getUserLocation(object : PlatformPositioningListener {
                     override fun onLocationUpdated(location: Location) {
                         loadMapScreen(location)
+                        userLocation = location
                     }
                 })
             }
