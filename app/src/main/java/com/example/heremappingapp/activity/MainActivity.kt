@@ -126,6 +126,9 @@ class MainActivity : AppCompatActivity(), LocationListener {
         listMapMarker.add(mapMarker)
     }
 
+    
+
+
     @RequiresApi(Build.VERSION_CODES.M)
     private fun setUpSearchEngine() {
         clearMap()
