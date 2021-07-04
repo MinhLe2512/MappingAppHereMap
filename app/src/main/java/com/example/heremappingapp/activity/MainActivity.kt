@@ -131,7 +131,7 @@ class MainActivity : AppCompatActivity(){
         var internetConnected = internetConnectivity()
 
         if (gpsEnabled && internetConnected) {
-            setMap()
+            //showMap()
         } else if (!gpsEnabled) {
             val gpsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
             showPopUpDialog(gpsIntent, REQUEST_LOCATION_SETTINGS, getString(R.string.location_tracking_off))
