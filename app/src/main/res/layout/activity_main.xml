@@ -4,24 +4,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".activity.MainActivity">
 
     <com.here.sdk.mapview.MapView
         android:id="@+id/map_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
 
-<<<<<<< Updated upstream
-=======
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/btn_search"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_margin="20dp"
-        android:backgroundTint="@android:color/holo_blue_dark"
-        android:src="@drawable/ic_search" />
+
+<!--    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--        android:id="@+id/btn_search"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_alignParentEnd="true"-->
+<!--        android:layout_alignParentBottom="true"-->
+<!--        android:layout_margin="20dp"-->
+<!--        android:backgroundTint="@android:color/holo_blue_dark"-->
+<!--        android:src="@drawable/ic_search" />-->
 
     <Button
         android:id="@+id/btn_address"
@@ -37,11 +36,5 @@
         android:id="@+id/activity_content_frame"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+
 </RelativeLayout>

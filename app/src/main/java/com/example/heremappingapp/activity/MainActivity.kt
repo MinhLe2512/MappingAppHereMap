@@ -23,8 +23,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.example.heremappingapp.R
 import com.example.heremappingapp.activity.*
-import com.example.heremappingapp.activity.`interface`.PlatformPositioningListener
-import com.example.heremappingapp.activity.`interface`.ResultListener
 import com.google.android.material.snackbar.Snackbar
 import com.here.sdk.core.*
 import com.here.sdk.mapview.*
@@ -36,14 +34,13 @@ import kotlin.collections.ArrayList
 import kotlin.random.Random
 
 @RequiresApi(Build.VERSION_CODES.M)
-class MainActivity : AppCompatActivity(), LocationListener {
-    private lateinit var permissionManager: PermissionsManager
-    private lateinit var locationPlatformListener: PlatformPositioningListener
+class MainActivity : AppCompatActivity(){
+
     private lateinit var searchEngine: SearchEngine
     private var listMapMarker = ArrayList<MapMarker>()
     private var listPolyline = ArrayList<MapPolyline>()
     private lateinit var userLocation: Location
-    private val  PERMISSION_REQUEST_LOCATION = 0
+    private val PERMISSION_REQUEST_LOCATION = 0
     private val REQUEST_LOCATION_SETTINGS = 1
     private val REQUEST_WIFI_CONNECTION = 2
 
@@ -85,10 +82,6 @@ class MainActivity : AppCompatActivity(), LocationListener {
         map_view.onDestroy()
     }
 
-    override fun onLocationChanged(location: Location) {
-        locationPlatformListener.onLocationUpdated(location)
-    }
-
 //    private fun getUserLocation(locationCallBack: PlatformPositioningListener) {
 //        val locationManager = this.getSystemService(LOCATION_SERVICE) as LocationManager
 //        this.locationPlatformListener = locationCallBack
@@ -114,12 +107,10 @@ class MainActivity : AppCompatActivity(), LocationListener {
             Snackbar.make(activity_content_frame, "Request location access to display map", Snackbar.LENGTH_INDEFINITE)
                     .setAction("OK", View.OnClickListener {
                         ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.ACCESS_COARSE_LOCATION), PERMISSION_REQUEST_LOCATION)
+                                Manifest.permission.ACCESS_COARSE_LOCATION), PERMISSION_REQUEST_LOCATION)
                     }).show()
-        }
-        else
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-                    , PERMISSION_REQUEST_LOCATION)
+        } else
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), PERMISSION_REQUEST_LOCATION)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -128,8 +119,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
                     && permissions[1] == Manifest.permission.ACCESS_COARSE_LOCATION) {
                 checkSettings()
             }
-        }
-        else {
+        } else {
             Snackbar.make(activity_content_frame, "Location permission denied", Snackbar.LENGTH_INDEFINITE).show()
         }
     }
@@ -138,16 +128,14 @@ class MainActivity : AppCompatActivity(), LocationListener {
     private fun checkSettings() {
         var gpsEnabled = locationTrackingEnabled()
 
-        var internetConnected =internetConnectivity()
+        var internetConnected = internetConnectivity()
 
         if (gpsEnabled && internetConnected) {
             setMap()
-        }
-        else if (!gpsEnabled) {
+        } else if (!gpsEnabled) {
             val gpsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
             showPopUpDialog(gpsIntent, REQUEST_LOCATION_SETTINGS, getString(R.string.location_tracking_off))
-        }
-        else {
+        } else {
             val internetIntent = Intent(Settings.ACTION_WIFI_SETTINGS)
             showPopUpDialog(internetIntent, REQUEST_WIFI_CONNECTION, getString(R.string.wireless_off))
         }
@@ -161,7 +149,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
         val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         var isWifiConnected = false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            connectivityManager.registerDefaultNetworkCallback(object: ConnectivityManager.NetworkCallback() {
+            connectivityManager.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
                     isWifiConnected = true
                 }
@@ -204,17 +192,17 @@ class MainActivity : AppCompatActivity(), LocationListener {
 //        })
 //    }
 
-    private fun addMapMarkers(geoCoordinates: GeoCoordinates, metadata: Metadata?) {
-        val image = BitmapFactory.decodeResource(resources, R.drawable.pin)
-        val scaledBitmap = Bitmap.createScaledBitmap(image, 100, 110, true)
-
-        val mapImage = MapImageFactory.fromBitmap(scaledBitmap)
-        val mapMarker = MapMarker(geoCoordinates, mapImage, Anchor2D(0.5, 1.0))
-        mapMarker.metadata = metadata
-
-        map_view.mapScene.addMapMarker(mapMarker)
-        listMapMarker.add(mapMarker)
-    }
+//    private fun addMapMarkers(geoCoordinates: GeoCoordinates, metadata: Metadata?) {
+//        val image = BitmapFactory.decodeResource(resources, R.drawable.pin)
+//        val scaledBitmap = Bitmap.createScaledBitmap(image, 100, 110, true)
+//
+//        val mapImage = MapImageFactory.fromBitmap(scaledBitmap)
+//        val mapMarker = MapMarker(geoCoordinates, mapImage, Anchor2D(0.5, 1.0))
+//        mapMarker.metadata = metadata
+//
+//        map_view.mapScene.addMapMarker(mapMarker)
+//        listMapMarker.add(mapMarker)
+//    }
 
 //    @RequiresApi(Build.VERSION_CODES.O)
 //    private fun startRouting(startGeoCoordinates: GeoCoordinates, destinationGeoCoordinates: GeoCoordinates) {
@@ -340,7 +328,7 @@ class MainActivity : AppCompatActivity(), LocationListener {
     }
 
     private fun showPopUpDialog(intent: Intent, requestCode: Int, message: String) {
-       val alertDialog = AlertDialog.Builder(this)
+        val alertDialog = AlertDialog.Builder(this)
         alertDialog.setMessage(message)
         alertDialog.setPositiveButton("Yes", DialogInterface.OnClickListener { dialog, which ->
             startActivityForResult(intent, requestCode)
@@ -374,53 +362,24 @@ class MainActivity : AppCompatActivity(), LocationListener {
 //    }
 
 
+    private fun getPermissionsToRequest(): ArrayList<String> {
+        val listPermissions = ArrayList<String>()
 
-    private inner class PermissionsManager {
-        private val PERMISSIONS_REQUEST_CODE = 42
-        private lateinit var resultListener: ResultListener
+        val packageInfo = this@MainActivity.packageManager.getPackageInfo(this@MainActivity.packageName, PackageManager.GET_PERMISSIONS)
 
-        fun request(resultListener: ResultListener) {
-            this.resultListener = resultListener
-
-            val missingPermission = getPermissionsToRequest()
-            if (missingPermission.size == 0)
-                resultListener.onPermisisonsGranted()
-            else
-                ActivityCompat.requestPermissions(this@MainActivity, missingPermission.toTypedArray(), PERMISSIONS_REQUEST_CODE)
-        }
-
-        fun onRequestPermissionsResult(requestCode: Int, grantResults: IntArray) {
-            if (PERMISSIONS_REQUEST_CODE == requestCode) {
-                var allGranted = true
-                for (result: Int in grantResults) {
-                    allGranted = allGranted and (result == PackageManager.PERMISSION_GRANTED)
-                }
-                if (allGranted)
-                    resultListener.onPermisisonsGranted()
-                else
-                    resultListener.onPermissionsDenied()
+        for (permission: String in packageInfo.requestedPermissions) {
+            if (ActivityCompat.checkSelfPermission(this@MainActivity, permission) != PackageManager.PERMISSION_GRANTED) {
+                if (Build.VERSION.SDK_INT == Build.VERSION_CODES.M && permission == Manifest.permission.CHANGE_NETWORK_STATE)
+                    continue
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && permission == Manifest.permission.ACTIVITY_RECOGNITION
+                        && permission == Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    continue
+                listPermissions.add(permission)
             }
         }
-
-
-        private fun getPermissionsToRequest(): ArrayList<String> {
-            val listPermissions = ArrayList<String>()
-
-            val packageInfo = this@MainActivity.packageManager.getPackageInfo(this@MainActivity.packageName, PackageManager.GET_PERMISSIONS)
-
-            for (permission: String in packageInfo.requestedPermissions) {
-                if (ActivityCompat.checkSelfPermission(this@MainActivity, permission) != PackageManager.PERMISSION_GRANTED) {
-                    if (Build.VERSION.SDK_INT == Build.VERSION_CODES.M && permission == Manifest.permission.CHANGE_NETWORK_STATE)
-                        continue
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && permission == Manifest.permission.ACTIVITY_RECOGNITION
-                            && permission == Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                        continue
-                    listPermissions.add(permission)
-                }
-            }
-            return listPermissions
-        }
+        return listPermissions
     }
+
 
     private inner class SearchResultMetadata(var searchResult: Place) : CustomMetadataValue {
         override fun getTag(): String {
@@ -428,3 +387,4 @@ class MainActivity : AppCompatActivity(), LocationListener {
         }
     }
 }
+
