@@ -6,5 +6,8 @@
 
     <string name="location_tracking_off">Location tracking is required for this app.  Do you want modify the location options?</string>
     <string name="wireless_off">An internet connection is needed for this app. Do you want to modify the wireless settings?</string>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 </resources>

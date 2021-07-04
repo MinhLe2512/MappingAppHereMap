@@ -37,5 +37,8 @@
         android:id="@+id/activity_content_frame"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 </RelativeLayout>
