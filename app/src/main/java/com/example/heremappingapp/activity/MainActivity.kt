@@ -8,6 +8,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.SearchView
 import android.widget.SearchView.OnQueryTextListener
+import android.widget.Toolbar
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
@@ -48,21 +49,24 @@ class MainActivity : AppCompatActivity() {
         //init Search Fragment
         searchFragment = SearchFragment()
         //searchCities()
+        setSupportActionBar(binding.mainToolbar)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_search, menu)
         val menuItem = menu?.findItem(R.id.action_search)
         val searchView = menuItem?.actionView as SearchView
-        binding.mainToolbar.setOnMenuItemClickListener { item ->
-            when (item!!.itemId) {
-                R.id.action_search -> {
-                    Log.d("Checking", " Pressed toolbar")
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container, searchFragment!!)
-                        .commit() } }
-            true
-        }
+        menuItem.setOnMenuItemClickListener(object : Toolbar.OnMenuItemClickListener,
+            MenuItem.OnMenuItemClickListener {
+            override fun onMenuItemClick(item: MenuItem?): Boolean {
+                Log.d("Checking", " Pressed toolbar")
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, searchFragment!!)
+                    .commit()
+                return true
+            }
+
+        })
         searchView.setOnQueryTextListener(object : OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 return false

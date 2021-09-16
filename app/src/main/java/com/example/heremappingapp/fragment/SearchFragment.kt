@@ -19,4 +19,8 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         return binding?.root
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        binding = null
+    }
 }
