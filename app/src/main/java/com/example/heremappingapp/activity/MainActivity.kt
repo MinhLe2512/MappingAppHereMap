@@ -3,15 +3,20 @@ package com.example.heremappingapp.activity
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.SearchView
+import android.widget.SearchView.OnQueryTextListener
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.navigation.findNavController
+import androidx.navigation.ui.setupWithNavController
 import com.example.heremappingapp.R
 import com.example.heremappingapp.databinding.ActivityMainBinding
 import com.example.heremappingapp.fragment.SearchFragment
 import com.here.sdk.mapview.*
 import com.here.sdk.search.*
-import kotlinx.android.synthetic.main.activity_main.view.*
-import kotlin.collections.ArrayList
 
 
 @RequiresApi(Build.VERSION_CODES.M)
@@ -26,13 +31,14 @@ class MainActivity : AppCompatActivity() {
     private val REQUEST_WIFI_CONNECTION = 2
 
     private lateinit var binding: ActivityMainBinding
-    private var searchFragment: SearchFragment?= null
+    private var searchFragment: SearchFragment? = null
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         initView()
-        floatingButton()
+        navBetweenFragments()
+//        floatingButton()
     }
 
     private fun initView() {
@@ -41,12 +47,38 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         //init Search Fragment
         searchFragment = SearchFragment()
+        //searchCities()
     }
 
-    private fun floatingButton() {
-        binding.floatingActionButton.setOnClickListener() {
-            supportFragmentManager.beginTransaction().replace(R.id.fragment_container, searchFragment!!).commit()
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_search, menu)
+        val menuItem = menu?.findItem(R.id.action_search)
+        val searchView = menuItem?.actionView as SearchView
+        binding.mainToolbar.setOnMenuItemClickListener { item ->
+            when (item!!.itemId) {
+                R.id.action_search -> {
+                    Log.d("Checking", " Pressed toolbar")
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, searchFragment!!)
+                        .commit() } }
+            true
         }
+        searchView.setOnQueryTextListener(object : OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                return false
+            }
+
+        })
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    private fun navBetweenFragments() {
+        val navController = findNavController(R.id.fragment_container)
+        binding.navBotView.setupWithNavController(navController)
     }
 }
 

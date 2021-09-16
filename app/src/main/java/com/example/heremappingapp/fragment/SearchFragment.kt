@@ -15,6 +15,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         savedInstanceState: Bundle?
     ): View? {
         binding = FragmentSearchBinding.inflate(inflater, container, false)
+        setHasOptionsMenu(true)
         return binding?.root
     }
 
