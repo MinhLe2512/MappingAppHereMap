@@ -3,17 +3,11 @@ package com.example.heremappingapp.activity
 import android.location.Location
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
-import android.widget.SearchView
-import android.widget.SearchView.OnQueryTextListener
-import android.widget.Toolbar
+import android.view.MotionEvent
+import android.view.View.OnTouchListener
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
-import androidx.navigation.ui.onNavDestinationSelected
 import androidx.navigation.ui.setupWithNavController
 import com.example.heremappingapp.R
 import com.example.heremappingapp.databinding.ActivityMainBinding
@@ -49,20 +43,19 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         //init Search Fragment
-        toolBarController()
+        searchFragment = SearchFragment()
+        setUpEditText()
 
     }
 
-    private fun toolBarController() {
-        setSupportActionBar(binding.mainToolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.setDisplayShowTitleEnabled(false)
-        binding.mainToolbar.setNavigationOnClickListener {
-            supportFragmentManager.beginTransaction()
-                .add(R.id.search_container, searchFragment!!)
-                .commit()
-        }
-        searchFragment = SearchFragment()
+    private fun setUpEditText() {
+
+        binding.edtTxt.setOnFocusChangeListener { _, _ ->
+            supportFragmentManager.beginTransaction().replace(
+                R.id.search_container,
+                searchFragment!!
+            ).commit() }
+
     }
 
     private fun navBetweenFragments() {
