@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragment.MapFragment">
+    tools:context=".fragment.MapFragment"
+    android:elevation="1dp">
 
     <com.here.sdk.mapview.MapView
         android:id="@+id/map_view"

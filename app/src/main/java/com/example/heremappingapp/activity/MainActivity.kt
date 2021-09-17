@@ -6,12 +6,14 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.SearchView
 import android.widget.SearchView.OnQueryTextListener
 import android.widget.Toolbar
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
+import androidx.navigation.ui.onNavDestinationSelected
 import androidx.navigation.ui.setupWithNavController
 import com.example.heremappingapp.R
 import com.example.heremappingapp.databinding.ActivityMainBinding
@@ -47,41 +49,24 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         //init Search Fragment
-        searchFragment = SearchFragment()
-        //searchCities()
-        setSupportActionBar(binding.mainToolbar)
+        toolBarController()
+
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu_search, menu)
-        val menuItem = menu?.findItem(R.id.action_search)
-        val searchView = menuItem?.actionView as SearchView
-        menuItem.setOnMenuItemClickListener(object : Toolbar.OnMenuItemClickListener,
-            MenuItem.OnMenuItemClickListener {
-            override fun onMenuItemClick(item: MenuItem?): Boolean {
-                Log.d("Checking", " Pressed toolbar")
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, searchFragment!!)
-                    .commit()
-                return true
-            }
-
-        })
-        searchView.setOnQueryTextListener(object : OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                return false
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                return false
-            }
-
-        })
-        return super.onCreateOptionsMenu(menu)
+    private fun toolBarController() {
+        setSupportActionBar(binding.mainToolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+        binding.mainToolbar.setNavigationOnClickListener {
+            supportFragmentManager.beginTransaction()
+                .add(R.id.search_container, searchFragment!!)
+                .commit()
+        }
+        searchFragment = SearchFragment()
     }
 
     private fun navBetweenFragments() {
-        val navController = findNavController(R.id.fragment_container)
+        val navController = findNavController(R.id.map_container)
         binding.navBotView.setupWithNavController(navController)
     }
 }

@@ -30,11 +30,11 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     }
 
     private fun loadMapScene() {
-        binding?.mapView?.getMapScene()?.loadScene(MapScheme.NORMAL_DAY,
+        binding?.mapView?.mapScene?.loadScene(MapScheme.NORMAL_DAY,
             LoadSceneCallback { mapError ->
                 if (mapError == null) {
                     val distanceInMeters = (1000 * 10).toDouble()
-                    binding?.mapView?.getCamera()?.lookAt(GeoCoordinates(52.530932, 13.384915), distanceInMeters)
+                    binding?.mapView?.camera?.lookAt(GeoCoordinates(52.530932, 13.384915), distanceInMeters)
                 } else {
 //                    Log.d(TAG, "Loading map failed: mapError: " + mapError.name)
                 }
