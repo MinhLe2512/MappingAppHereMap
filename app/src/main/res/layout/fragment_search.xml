@@ -13,9 +13,9 @@
         android:layout_height="50dp"
         android:layout_margin="20dp"
         android:layout_marginStart="20dp"
-        android:src="@drawable/ic_arrow_back"
+        android:background="@drawable/border_app_bar"
         android:elevation="10dp"
-        android:background="@drawable/border_app_bar"/>
+        android:src="@drawable/ic_arrow_back" />
 
     <androidx.appcompat.widget.SearchView
         android:id="@+id/search_view"
@@ -26,14 +26,12 @@
         app:iconifiedByDefault="false" />
 
     <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/search_res"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-
         android:layout_below="@+id/search_view"
         android:layout_marginStart="@dimen/spacing_normal"
 
         android:layout_marginEnd="@dimen/spacing_normal" />
-    <!--        android:layout_below="@id/search_view"/>-->
-
 
 </RelativeLayout>
