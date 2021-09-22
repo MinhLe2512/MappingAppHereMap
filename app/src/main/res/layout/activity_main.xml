@@ -8,24 +8,17 @@
 
     <fragment
         android:id="@+id/map_container"
-        android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:defaultNavHost="true"
-        app:navGraph="@navigation/navigation_graph" />
+        android:name="com.example.heremappingapp.fragment.MapFragment"/>
 
-        <EditText
-            android:id="@+id/edt_txt"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="@dimen/spacing_normal"
-            android:background="@drawable/border_app_bar"
-            android:drawableStart="@drawable/ic_location"
-            android:drawablePadding="@dimen/spacing_normal"
-            android:elevation="@dimen/elevation_edt_txt"
-            android:hint="@string/search_hint"
-            android:padding="@dimen/spacing_small"
-            android:textSize="@dimen/font_normal" />
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/fab_search"
+        android:layout_alignParentEnd="true"
+        android:layout_above="@+id/nav_bot_view"
+        android:layout_margin="20dp"/>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/nav_bot_view"

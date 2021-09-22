@@ -8,14 +8,17 @@ import androidx.fragment.app.Fragment
 import com.example.heremappingapp.R
 import com.example.heremappingapp.databinding.FragmentMapBinding
 import com.here.sdk.core.GeoCoordinates
+import com.here.sdk.core.Point2D
 import com.here.sdk.mapview.MapScene.LoadSceneCallback
 import com.here.sdk.mapview.MapScheme
+import java.lang.RuntimeException
 
 
 class MapFragment : Fragment(R.layout.fragment_map) {
     private var binding: FragmentMapBinding?= null
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         binding = FragmentMapBinding.inflate(inflater, container, false)
@@ -39,5 +42,12 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 //                    Log.d(TAG, "Loading map failed: mapError: " + mapError.name)
                 }
             })
+    }
+
+
+    fun getCenterViewMap(): GeoCoordinates {
+        return binding!!.mapView.viewToGeoCoordinates(Point2D(
+            binding!!.mapView.width / 2.0,
+            binding!!.mapView.height / 2.0)) ?: throw RuntimeException("CenterGeoCoordinates are null")
     }
 }

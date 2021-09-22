@@ -7,18 +7,33 @@
     android:background="@color/white"
     tools:context=".fragment.SearchFragment">
 
+    <ImageButton
+        android:id="@+id/img_btn"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="20dp"
+        android:layout_marginStart="20dp"
+        android:src="@drawable/ic_arrow_back"
+        android:elevation="10dp"
+        android:background="@drawable/border_app_bar"/>
+
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/search_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:background="@drawable/border_app_bar"
+        app:iconifiedByDefault="false" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing_large"
-        android:layout_marginStart="@dimen/spacing_normal"
-        android:layout_marginEnd="@dimen/spacing_normal"/>
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@drawable/border_app_bar"
-        android:layout_alignParentBottom="true"
-        android:backgroundTint="@android:color/darker_gray"
-        android:layout_margin="@dimen/spacing_normal"/>
+        android:layout_below="@+id/search_view"
+        android:layout_marginStart="@dimen/spacing_normal"
+
+        android:layout_marginEnd="@dimen/spacing_normal" />
+    <!--        android:layout_below="@id/search_view"/>-->
+
+
 </RelativeLayout>
