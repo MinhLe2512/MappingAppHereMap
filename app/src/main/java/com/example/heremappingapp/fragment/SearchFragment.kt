@@ -3,8 +3,9 @@ package com.example.heremappingapp.fragment
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.Filter
+import android.widget.Filterable
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -23,9 +24,11 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
     private var searchEngine: SearchEngine? = null
 
     private val maxItems = 30
-    private val maxSuggestedItems = 15
+    private val maxSuggestedItems = 10
     private var centerGeoCoordinates: GeoCoordinates? = null
     private var searchOptions: SearchOptions? = null
+
+    private var adapter: ResultSearchAdapter? = null
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -56,12 +59,11 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
 
     private fun initRecyclerView(list: MutableList<Place>) {
         binding!!.searchRes.layoutManager = LinearLayoutManager(activity)
-        val adapter = ResultSearchAdapter(list)
+        adapter = ResultSearchAdapter(list)
         binding!!.searchRes.adapter = adapter
     }
 
     private fun handleSearch() {
-
         binding!!.searchView.setOnQueryTextListener(object :
             androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -70,13 +72,9 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
 
             override fun onQueryTextChange(newText: String?): Boolean {
                 searchEngine!!.suggest(
-                    TextQuery(newText!!, centerGeoCoordinates!!),
-                    searchOptions!!,
-                    autoSuggestCallback
-                )
+                    TextQuery(newText!!, centerGeoCoordinates!!), searchOptions!!, autoSuggestCallback)
                 return true
             }
-
         })
     }
 
@@ -91,10 +89,8 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 val list =  mutableListOf<Place>()
                 for (suggestion in mutableList) {
                     val place = suggestion.place
-                    if (place != null) {
+                    if (place != null)
                         list.add(place)
-                    }
-                    else continue
                 }
                 initRecyclerView(list)
                 return@SuggestCallback
@@ -109,7 +105,8 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
     private inner class ResultSearchAdapter(private val list: MutableList<Place>) :
         RecyclerView.Adapter<ViewHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.layout_search_result, parent, false)
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.layout_search_result, parent, false)
             return ViewHolder(view)
         }
 
@@ -123,7 +120,6 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             return list.size
         }
     }
-
     private inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val titleView: TextView = view.findViewById(R.id.txt_title)
         val addressView: TextView = view.findViewById(R.id.txt_address)

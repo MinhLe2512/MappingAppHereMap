@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity() {
                 val centerGeoCoordinates = mapFragment!!.getCenterViewMap()
                 val userLocation = UserLocation(centerGeoCoordinates)
 
-                var bundle = Bundle()
+                val bundle = Bundle()
                 bundle.putSerializable("user_location", userLocation)
                 searchFragment!!.arguments = bundle;
                 supportFragmentManager.beginTransaction().add(R.id.search_container, it1)
@@ -66,7 +66,10 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction().replace(R.id.map_container, fragment).commit()
     }
 
-
+    override fun onBackPressed() {
+        super.onBackPressed()
+        finish()
+    }
 }
 
     
