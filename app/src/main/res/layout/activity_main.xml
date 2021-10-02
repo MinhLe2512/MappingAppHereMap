@@ -8,25 +8,35 @@
 
     <fragment
         android:id="@+id/map_container"
+        android:name="com.example.heremappingapp.fragment.MapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:name="com.example.heremappingapp.fragment.MapFragment"/>
+        android:layout_height="match_parent" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/fab_search"
-        android:layout_alignParentEnd="true"
-        android:layout_above="@+id/nav_bot_view"
-        android:layout_margin="20dp"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:elevation="4dp"
+        android:background="@drawable/border_app_bar"
+        android:layout_margin="@dimen/spacing_normal"
+        android:padding="5dp"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/txt_search_res"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:drawableStartCompat="@drawable/ic_location"
+            android:text="@string/search_hint"
+            android:textSize="@dimen/font_normal"
+            android:drawablePadding="@dimen/spacing_small"/>
+    </LinearLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/nav_bot_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/map_container"
-        android:background="@android:color/holo_orange_light"
-        app:menu="@menu/menu_bot_nav" />
+        android:background="@android:color/holo_orange_light" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/search_container"
