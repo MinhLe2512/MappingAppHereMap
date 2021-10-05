@@ -91,6 +91,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                                 { searchRes ->
                                     run {
                                         if (searchRes != null) {
+                                            clearMap()
                                             val destinationWayPoint =
                                                 searchRes.geoCoordinates?.let { Waypoint(it) }
                                             if (destinationWayPoint != null) {
@@ -133,6 +134,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     }
 
     private fun startRouting(start: Waypoint, end: Waypoint) {
+        clearMap()
         try {
             routingEngine = RoutingEngine()
         }catch (e: InstantiationErrorException) {
@@ -168,5 +170,14 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         val mapMarker = MapMarker(geoCoordinates, mapImage)
         binding!!.mapView.mapScene.addMapMarker(mapMarker)
         mapMarkerList.add(mapMarker)
+    }
+
+    private fun clearMap() {
+        for (mapMarker in mapMarkerList)
+            binding!!.mapView.mapScene.removeMapMarker(mapMarker)
+        mapMarkerList.clear()
+        for (mapPolyline in mapPolyLines)
+            binding!!.mapView.mapScene.removeMapPolyline(mapPolyline)
+        mapPolyLines.clear()
     }
 }
