@@ -15,13 +15,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.heremappingapp.R
 import com.example.heremappingapp.`interface`.SearchResultClick
 import com.example.heremappingapp.databinding.FragmentSearchBinding
-import com.example.heremappingapp.model.SearchLocationSharedViewModel
+import com.example.heremappingapp.model.SearchFragmentViewModel
 import com.example.heremappingapp.model.SearchResultModel
+import com.example.heremappingapp.model.MainActivityViewModel
 import com.here.sdk.core.GeoCoordinates
 import com.here.sdk.core.LanguageCode
 import com.here.sdk.core.errors.InstantiationErrorException
 import com.here.sdk.search.*
 import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
 
 
 class SearchFragment : Fragment(R.layout.fragment_search) {
@@ -32,7 +34,9 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
     private val maxSuggestedItems = 10
     private var centerGeoCoordinates = GeoCoordinates(10.762307, 106.640608)
     private var searchOptions: SearchOptions? = null
-    private val searchLocationSharedViewModel: SearchLocationSharedViewModel by activityViewModels()
+
+    private val mainActivityViewModel: MainActivityViewModel by activityViewModels()
+    private val searchFragmentViewModel: SearchFragmentViewModel by activityViewModels()
 
 
     private var adapter: ResultSearchAdapter? = null
@@ -47,6 +51,11 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         return binding?.root
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        binding = null
+    }
+
     private fun handleBackButton() {
         binding!!.backBtn.setOnClickListener {
             closeSearchFragment()
@@ -56,6 +65,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
     private fun closeSearchFragment() {
         (activity as AppCompatActivity).supportFragmentManager.beginTransaction().remove(this).commit()
     }
+
     private fun initSearch() {
         try {
             searchEngine = SearchEngine()
@@ -74,7 +84,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
                 Toast.makeText(context, searchResultModel?.address, Toast.LENGTH_SHORT).show()
                 closeSearchFragment()
                 if (searchResultModel != null) {
-                    searchLocationSharedViewModel.setSearchLocation(searchResultModel)
+                    searchFragmentViewModel.setSearchLocation(searchResultModel)
                 }
             }
 
@@ -120,10 +130,6 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             }
         }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        binding = null
-    }
 
     private inner class ResultSearchAdapter(private val list: MutableList<Place>, private var searchResultClick: SearchResultClick)
         : RecyclerView.Adapter<ViewHolder>() {

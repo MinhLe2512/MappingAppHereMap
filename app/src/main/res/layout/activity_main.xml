@@ -13,6 +13,7 @@
         android:layout_height="match_parent" />
 
     <LinearLayout
+        android:id="@+id/layout_search_res"
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:elevation="4dp"
@@ -31,12 +32,17 @@
             android:drawablePadding="@dimen/spacing_small"/>
     </LinearLayout>
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/nav_bot_view"
-        android:layout_width="match_parent"
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_location"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/map_container"
-        android:background="@android:color/holo_orange_light" />
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="@dimen/spacing_normal"
+        android:layout_marginBottom="@dimen/spacing_normal"
+        android:layout_alignParentBottom="true"
+        android:backgroundTint="@color/white"
+        android:src="@drawable/ic_location_searching"
+        app:tint="@android:color/holo_red_light" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/search_container"

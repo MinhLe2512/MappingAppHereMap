@@ -5,14 +5,16 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.heremappingapp.R
 import com.example.heremappingapp.databinding.ActivityMainBinding
+
 import com.example.heremappingapp.fragment.MapFragment
 import com.example.heremappingapp.fragment.SearchFragment
-import com.example.heremappingapp.model.SearchLocationSharedViewModel
-import com.example.heremappingapp.model.UserLocationSharedViewModel
+import com.example.heremappingapp.model.SearchFragmentViewModel
+import com.example.heremappingapp.model.MainActivityViewModel
 
 
 @RequiresApi(Build.VERSION_CODES.M)
@@ -23,8 +25,8 @@ class MainActivity : AppCompatActivity() {
     private var mapFragment = MapFragment()
 //    private var favoriteFragment: FavoriteFragment? = null
 
-    private lateinit var searchResultModel: SearchLocationSharedViewModel
-    private lateinit var userLocationModel: UserLocationSharedViewModel
+    private lateinit var searchResultModel: SearchFragmentViewModel
+    private lateinit var userLocationModel: MainActivityViewModel
 
     var FINE_LOCATION_REQUEST: Int = 888
     var TAG: String = "MainActivity"
@@ -35,7 +37,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 //        floatingButton()
         initView()
-        initNavBot()
         initTxtView()
     }
 
@@ -48,27 +49,13 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Touch TextView", Toast.LENGTH_SHORT).show()
             supportFragmentManager.beginTransaction().add(R.id.search_container, searchFragment).commit()
         }
-        setCurrentFragment(mapFragment)
     }
 
     private fun initTxtView() {
-        searchResultModel = ViewModelProvider(this)[SearchLocationSharedViewModel::class.java]
+        searchResultModel = ViewModelProvider(this)[SearchFragmentViewModel::class.java]
         searchResultModel.getSearchLocation().observe(this,
             { searchResult -> binding.txtSearchRes.text = searchResult?.address })
-    }
 
-    private fun initNavBot() {
-        binding.navBotView.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.mapFragment -> setCurrentFragment(mapFragment)
-//                R.id.favFragment -> setCurrentFragment(favoriteFragment!!)
-            }
-            false
-        }
-    }
-
-    private fun setCurrentFragment(fragment: Fragment){
-        supportFragmentManager.beginTransaction().replace(R.id.map_container, fragment).commit()
     }
 
 }

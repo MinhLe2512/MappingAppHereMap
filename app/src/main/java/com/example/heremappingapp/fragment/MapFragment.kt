@@ -1,28 +1,31 @@
 package com.example.heremappingapp.fragment
 
 import android.Manifest
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.activityViewModels
 import com.example.heremappingapp.*
-import com.example.heremappingapp.model.UserLocationSharedViewModel
 import com.example.heremappingapp.databinding.FragmentMapBinding
 import com.example.heremappingapp.model.CameraModel
+import com.example.heremappingapp.model.SearchFragmentViewModel
 import com.example.heremappingapp.utils.PermissionRequester
 import com.example.heremappingapp.utils.PlatformLocationProvider
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.here.sdk.core.*
-import com.here.sdk.mapview.MapCamera
+import com.here.sdk.core.errors.InstantiationErrorException
+
 import com.here.sdk.mapview.MapImageFactory
 import com.here.sdk.mapview.MapMarker
+import com.here.sdk.mapview.MapPolyline
 import com.here.sdk.mapview.MapScene.LoadSceneCallback
 import com.here.sdk.mapview.MapScheme
+import com.here.sdk.routing.*
+import kotlinx.android.synthetic.main.fragment_map.*
+import kotlin.collections.ArrayList
 
 
 class MapFragment : Fragment(R.layout.fragment_map) {
@@ -31,8 +34,13 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private lateinit var platformLocationProvider: PlatformLocationProvider
     private lateinit var permissionRequester: PermissionRequester
 
+    private val sharedSearchViewModel: SearchFragmentViewModel by activityViewModels()
+
     private lateinit var userLocation: GeoCoordinates
-    private lateinit var camera: CameraModel
+    private var routingEngine: RoutingEngine? = null
+
+    private var mapMarkerList: MutableList<MapMarker> = ArrayList()
+    private var mapPolyLines: MutableList<MapPolyline> = ArrayList()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         binding = FragmentMapBinding.inflate(inflater, container, false)
@@ -40,7 +48,6 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 //        arguments?.getString("user_location")?.let { Log.d("TAG", it) }
 
         loadMapScene()
-        initFabButton()
         return binding?.root
     }
 
@@ -54,30 +61,12 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         permissionRequester.onRequestPermissionsRequest(requestCode, grantResults)
     }
 
-    private fun initFabButton() {
-        binding!!.fabLocation.setOnClickListener{
-//            locateUserLocation()
-            onMapReady()
-        }
-    }
-
-    private fun onMapReady() {
-        camera = CameraModel(binding!!.mapView.camera)
-        camera.addObserver()
-        val transformCenter = camera.addPrincipalPoint(binding!!.mapView.width.toDouble(),
-            binding!!.mapView.height.toDouble())
-        val cameraTargetView = binding!!.catPolite
-        cameraTargetView.x = transformCenter.x.toFloat() - cameraTargetView.x / 2
-        cameraTargetView.y = transformCenter.y.toFloat() - cameraTargetView.y / 2
-
-    }
 
     private fun loadMapScene() {
         binding?.mapView?.mapScene?.loadScene(
             MapScheme.NORMAL_DAY,
             LoadSceneCallback { mapError ->
                 if (mapError == null) {
-                    onMapReady()
                     locateUserLocation()
                 }
             })
@@ -97,6 +86,20 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                             handleCamera(userLocation)
                             addPoiMapMarker(userLocation)
 
+                            val startWayPoint = Waypoint(userLocation)
+                            sharedSearchViewModel.getSearchLocation().observe(viewLifecycleOwner,
+                                { searchRes ->
+                                    run {
+                                        if (searchRes != null) {
+                                            val destinationWayPoint =
+                                                searchRes.geoCoordinates?.let { Waypoint(it) }
+                                            if (destinationWayPoint != null) {
+                                                startRouting(startWayPoint, destinationWayPoint)
+                                            }
+                                        }
+                                    }
+                                })
+
                             platformLocationProvider.stopLocating()
                         }
                         super.onLocationUpdated(location)
@@ -106,7 +109,6 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             override fun permissionsDenied() {
                 permissionRequester.checkForPermissions(Manifest.permission.ACCESS_FINE_LOCATION, "fine_location", 888)
             }
-
         })
     }
 
@@ -130,10 +132,41 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         binding!!.mapView.camera.lookAt(geoCoordinates, geoOrientationUpdate, distanceInMeters)
     }
 
-    fun getCenterViewMap(): GeoCoordinates {
-        return binding!!.mapView.viewToGeoCoordinates(
-            Point2D(binding!!.mapView.width / 2.0, binding!!.mapView.height / 2.0)
-        ) ?: throw RuntimeException("CenterGeoCoordinates are null")
+    private fun startRouting(start: Waypoint, end: Waypoint) {
+        try {
+            routingEngine = RoutingEngine()
+        }catch (e: InstantiationErrorException) {
+            throw RuntimeException("Initialize Routing engined failed" + e.error.name)
+        }
+
+        val waypoints = ArrayList<Waypoint>(listOf(start, end))
+
+        routingEngine!!.calculateRoute(waypoints,
+        CarOptions()
+        ) { routingError: RoutingError?, routes: MutableList<Route>? ->
+            if (routingError == null) {
+                val route = routes?.get(0)
+                if (route != null) {
+                    showRouteOnMap(route)
+                    addMapCircleMarker(end.coordinates, R.drawable.red_dot)
+                }
+            }
+        }
+
     }
 
+    private fun showRouteOnMap(route: Route) {
+        val routeGeoPolyline = GeoPolyline(route.polyline)
+        val routeMapPolyline = MapPolyline(routeGeoPolyline, 20.0, Color.valueOf(0.0f, 0.56f, 0.54f, 0.63f))
+
+        binding!!.mapView.mapScene.addMapPolyline(routeMapPolyline)
+        mapPolyLines.add(routeMapPolyline)
+    }
+
+    private fun addMapCircleMarker(geoCoordinates: GeoCoordinates, resourceId: Int) {
+        val mapImage = MapImageFactory.fromResource(context?.resources, resourceId)
+        val mapMarker = MapMarker(geoCoordinates, mapImage)
+        binding!!.mapView.mapScene.addMapMarker(mapMarker)
+        mapMarkerList.add(mapMarker)
+    }
 }
