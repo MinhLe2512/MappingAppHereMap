@@ -9,11 +9,11 @@ import android.location.LocationManager
 import android.util.Log
 import com.here.sdk.core.GeoCoordinates
 import java.util.*
-
+const val LOCATION_UPDATE_INTERVAL_IN_MS: Long = 100
 
 class PlatformLocationProvider(private val context: Context): LocationListener {
     private lateinit var locationManager: LocationManager
-    private val LOCATION_UPDATE_INTERVAL_IN_MS: Long = 100
+
     private var locationPlatformListener: LocationPlatformListener? = null
 
     interface LocationPlatformListener {

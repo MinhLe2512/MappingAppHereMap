@@ -1,8 +1,9 @@
 package com.example.heremappingapp.fragment
 
 import android.Manifest
-import android.graphics.BitmapFactory
+import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +12,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.heremappingapp.*
 import com.example.heremappingapp.databinding.FragmentMapBinding
-import com.example.heremappingapp.model.CameraModel
 import com.example.heremappingapp.model.SearchFragmentViewModel
 import com.example.heremappingapp.utils.PermissionRequester
 import com.example.heremappingapp.utils.PlatformLocationProvider
@@ -24,7 +24,6 @@ import com.here.sdk.mapview.MapPolyline
 import com.here.sdk.mapview.MapScene.LoadSceneCallback
 import com.here.sdk.mapview.MapScheme
 import com.here.sdk.routing.*
-import kotlinx.android.synthetic.main.fragment_map.*
 import kotlin.collections.ArrayList
 
 
@@ -133,6 +132,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         binding!!.mapView.camera.lookAt(geoCoordinates, geoOrientationUpdate, distanceInMeters)
     }
 
+    //Routing from user Location to Search Location
     private fun startRouting(start: Waypoint, end: Waypoint) {
         clearMap()
         try {
@@ -141,9 +141,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             throw RuntimeException("Initialize Routing engined failed" + e.error.name)
         }
 
-        val waypoints = ArrayList<Waypoint>(listOf(start, end))
+        val wayPoints = ArrayList<Waypoint>(listOf(start, end))
 
-        routingEngine!!.calculateRoute(waypoints,
+        routingEngine!!.calculateRoute(wayPoints,
         CarOptions()
         ) { routingError: RoutingError?, routes: MutableList<Route>? ->
             if (routingError == null) {
@@ -151,10 +151,35 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                 if (route != null) {
                     showRouteOnMap(route)
                     addMapCircleMarker(end.coordinates, R.drawable.red_dot)
+                    //Zoom to route
+                    val listSection = route.sections
+                    //Instruction for section
+                    for (section in listSection) {
+                        maneuverInstruction(section)
+                    }
+
+                    binding!!.mapView.camera.lookAt(route.boundingBox, GeoOrientationUpdate(null, null))
                 }
             }
         }
 
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun maneuverInstruction(section: Section) {
+        val listManeuvers = section.maneuvers
+        for (maneuver in listManeuvers) {
+            val maneuverAction = maneuver.action
+            val maneuverLocation = maneuver.coordinates
+            maneuver.lengthInMeters
+            Log.d("Directions", maneuver.text +
+                    ", Action: " + maneuverAction +
+                    ", GeoCoordinates: " + maneuverLocation)
+//            binding!!.txtManeuver.text = maneuver.text +
+//                    ", Action: " + maneuverAction +
+//                    ", GeoCoordinates: " + maneuverLocation.latitude +
+//                    ", " + maneuverLocation.longitude
+        }
     }
 
     private fun showRouteOnMap(route: Route) {

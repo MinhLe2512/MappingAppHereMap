@@ -17,7 +17,6 @@ import com.example.heremappingapp.`interface`.SearchResultClick
 import com.example.heremappingapp.databinding.FragmentSearchBinding
 import com.example.heremappingapp.model.SearchFragmentViewModel
 import com.example.heremappingapp.model.SearchResultModel
-import com.example.heremappingapp.model.MainActivityViewModel
 import com.here.sdk.core.GeoCoordinates
 import com.here.sdk.core.LanguageCode
 import com.here.sdk.core.errors.InstantiationErrorException
@@ -35,7 +34,6 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
     private var centerGeoCoordinates = GeoCoordinates(10.762307, 106.640608)
     private var searchOptions: SearchOptions? = null
 
-    private val mainActivityViewModel: MainActivityViewModel by activityViewModels()
     private val searchFragmentViewModel: SearchFragmentViewModel by activityViewModels()
 
 

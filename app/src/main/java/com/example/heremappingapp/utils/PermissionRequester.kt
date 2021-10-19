@@ -11,20 +11,19 @@ import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
+const val PERMISSIONS_REQUEST_CODE = 42
 
+//Get all the permissions
 class PermissionRequester(private val activity: Activity) {
-    private val PERMISSIONS_REQUEST_CODE = 42
-    private var resultListener: ResultListener? = null
 
-    private val FINE_LOCATION = 101
-    private val INTERNET = 102
-    private val COARSE_LOCATION = 103
+    private var resultListener: ResultListener? = null
 
     interface ResultListener {
         fun permissionsGranted()
         fun permissionsDenied()
     }
 
+    //Request permissions
     fun request(resultListener: ResultListener) {
         this.resultListener = resultListener
 
@@ -37,6 +36,7 @@ class PermissionRequester(private val activity: Activity) {
         }
     }
 
+    //override onRequestPermissions
     fun onRequestPermissionsRequest(requestCode: Int, grantResults: IntArray) {
         if (resultListener == null || grantResults.isEmpty())
             return
@@ -52,6 +52,7 @@ class PermissionRequester(private val activity: Activity) {
         }
     }
 
+    //Check missing permissions
     fun checkForPermissions(permission: String, name: String, requestCode: Int) {
         when {
             ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED -> {
@@ -62,6 +63,7 @@ class PermissionRequester(private val activity: Activity) {
         }
     }
 
+    //Show Dialog
     private fun showDialog(permission: String, name: String, requestCode: Int) {
         val builder = AlertDialog.Builder(activity)
         builder.apply {
@@ -90,11 +92,7 @@ class PermissionRequester(private val activity: Activity) {
             )
             if (packageInfo.requestedPermissions != null) {
                 for (permission in packageInfo.requestedPermissions) {
-                    if (ContextCompat.checkSelfPermission(
-                            activity,
-                            permission
-                        ) != PackageManager.PERMISSION_GRANTED
-                    ) {
+                    if (ContextCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED) {
                         if (Build.VERSION.SDK_INT == Build.VERSION_CODES.M &&
                             permission.equals(Manifest.permission.CHANGE_NETWORK_STATE)
                         ) {
